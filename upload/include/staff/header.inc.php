@@ -1,16 +1,20 @@
 <?php
 header("Content-Type: text/html; charset=UTF-8");
+header("Content-Security-Policy: frame-ancestors ".$cfg->getAllowIframes().";");
 
 $title = ($ost && ($title=$ost->getPageTitle()))
     ? $title : ('osTicket :: '.__('Staff Control Panel'));
 
 if (!isset($_SERVER['HTTP_X_PJAX'])) { ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html <?php
+<html<?php
 if (($lang = Internationalization::getCurrentLanguage())
         && ($info = Internationalization::getLanguageInfo($lang))
         && (@$info['direction'] == 'rtl'))
-    echo 'dir="rtl" class="rtl"';
+    echo ' dir="rtl" class="rtl"';
+if ($lang) {
+    echo ' lang="' . Internationalization::rfc1766($lang) . '"';
+}
 ?>>
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
@@ -24,31 +28,27 @@ if (($lang = Internationalization::getCurrentLanguage())
         .tip_shadow { display:block !important; }
     </style>
     <![endif]-->
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/jquery-1.8.3.min.js?f4a172f"></script>
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/jquery-ui-1.10.3.custom.min.js?f4a172f"></script>
-    <script type="text/javascript" src="./js/scp.js?f4a172f"></script>
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/jquery.pjax.js?f4a172f"></script>
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/filedrop.field.js?f4a172f"></script>
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/jquery.multiselect.min.js?f4a172f"></script>
-    <script type="text/javascript" src="./js/tips.js?f4a172f"></script>
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/redactor.min.js?f4a172f"></script>
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/redactor-osticket.js?f4a172f"></script>
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/redactor-fonts.js?f4a172f"></script>
-    <script type="text/javascript" src="./js/bootstrap-typeahead.js?f4a172f"></script>
-    <link rel="stylesheet" href="<?php echo ROOT_PATH ?>css/thread.css?f4a172f" media="all"/>
-    <link rel="stylesheet" href="./css/scp.css?f4a172f" media="all"/>
-    <link rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/redactor.css?f4a172f" media="screen"/>
-    <link rel="stylesheet" href="./css/typeahead.css?f4a172f" media="screen"/>
-    <link type="text/css" href="<?php echo ROOT_PATH; ?>css/ui-lightness/jquery-ui-1.10.3.custom.min.css?f4a172f"
+    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/jquery-3.4.0.min.js?f1e9e88"></script>
+    <link rel="stylesheet" href="<?php echo ROOT_PATH ?>css/thread.css?f1e9e88" media="all"/>
+    <link rel="stylesheet" href="<?php echo ROOT_PATH ?>scp/css/scp.css?f1e9e88" media="all"/>
+    <link rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/redactor.css?f1e9e88" media="screen"/>
+    <link rel="stylesheet" href="<?php echo ROOT_PATH ?>scp/css/typeahead.css?f1e9e88" media="screen"/>
+    <link type="text/css" href="<?php echo ROOT_PATH; ?>css/ui-lightness/jquery-ui-1.10.3.custom.min.css?f1e9e88"
          rel="stylesheet" media="screen" />
-     <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/font-awesome.min.css?f4a172f"/>
+    <link rel="stylesheet" href="<?php echo ROOT_PATH ?>css/jquery-ui-timepicker-addon.css?f1e9e88" media="all"/>
+    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/font-awesome.min.css?f1e9e88"/>
     <!--[if IE 7]>
-    <link rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/font-awesome-ie7.min.css?f4a172f"/>
+    <link rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/font-awesome-ie7.min.css?f1e9e88"/>
     <![endif]-->
-    <link type="text/css" rel="stylesheet" href="./css/dropdown.css?f4a172f"/>
-    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/loadingbar.css?f4a172f"/>
-    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/rtl.css?f4a172f"/>
-    <script type="text/javascript" src="./js/jquery.dropdown.js?f4a172f"></script>
+    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH ?>scp/css/dropdown.css?f1e9e88"/>
+    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/loadingbar.css?f1e9e88"/>
+    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/flags.css?f1e9e88"/>
+    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/select2.min.css?f1e9e88"/>
+    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH; ?>css/rtl.css?f1e9e88"/>
+    <link type="text/css" rel="stylesheet" href="<?php echo ROOT_PATH ?>scp/css/translatable.css?f1e9e88"/>
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="<?php echo ROOT_PATH ?>images/oscar-favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?php echo ROOT_PATH ?>images/oscar-favicon-16x16.png" sizes="16x16" />
 
     <?php
     if($ost && ($headers=$ost->getExtraHeaders())) {
@@ -70,16 +70,16 @@ if (($lang = Internationalization::getCurrentLanguage())
         <p id="info" class="pull-right no-pjax"><?php echo sprintf(__('Welcome, %s.'), '<strong>'.$thisstaff->getFirstName().'</strong>'); ?>
            <?php
             if($thisstaff->isAdmin() && !defined('ADMINPAGE')) { ?>
-            | <a href="admin.php" class="no-pjax"><?php echo __('Admin Panel'); ?></a>
+            | <a href="<?php echo ROOT_PATH ?>scp/admin.php" class="no-pjax"><?php echo __('Admin Panel'); ?></a>
             <?php }else{ ?>
-            | <a href="index.php" class="no-pjax"><?php echo __('Agent Panel'); ?></a>
+            | <a href="<?php echo ROOT_PATH ?>scp/index.php" class="no-pjax"><?php echo __('Agent Panel'); ?></a>
             <?php } ?>
-            | <a href="profile.php"><?php echo __('My Preferences'); ?></a>
-            | <a href="logout.php?auth=<?php echo $ost->getLinkToken(); ?>" class="no-pjax"><?php echo __('Log Out'); ?></a>
+            | <a href="<?php echo ROOT_PATH ?>scp/profile.php"><?php echo __('Profile'); ?></a>
+            | <a href="<?php echo ROOT_PATH ?>scp/logout.php?auth=<?php echo $ost->getLinkToken(); ?>" class="no-pjax"><?php echo __('Log Out'); ?></a>
         </p>
-        <a href="index.php" class="no-pjax" id="logo">
+        <a href="<?php echo ROOT_PATH ?>scp/index.php" class="no-pjax" id="logo">
             <span class="valign-helper"></span>
-            <img src="logo.php" alt="osTicket &mdash; <?php echo __('Customer Support System'); ?>"/>
+            <img src="<?php echo ROOT_PATH ?>scp/logo.php?<?php echo strtotime($cfg->lastModified('staff_logo_id')); ?>" alt="osTicket &mdash; <?php echo __('Customer Support System'); ?>"/>
         </a>
     </div>
     <div id="pjax-container" class="<?php if ($_POST) echo 'no-pjax'; ?>">
@@ -99,14 +99,17 @@ if (($lang = Internationalization::getCurrentLanguage())
     <ul id="nav">
 <?php include STAFFINC_DIR . "templates/navigation.tmpl.php"; ?>
     </ul>
-    <ul id="sub_nav">
-<?php include STAFFINC_DIR . "templates/sub-navigation.tmpl.php"; ?>
-    </ul>
-    <div id="content">
+    <?php include STAFFINC_DIR . "templates/sub-navigation.tmpl.php"; ?>
+
+        <div id="content">
         <?php if($errors['err']) { ?>
             <div id="msg_error"><?php echo $errors['err']; ?></div>
         <?php }elseif($msg) { ?>
             <div id="msg_notice"><?php echo $msg; ?></div>
         <?php }elseif($warn) { ?>
             <div id="msg_warning"><?php echo $warn; ?></div>
-        <?php } ?>
+        <?php }
+        foreach (Messages::getMessages() as $M) { ?>
+            <div class="<?php echo strtolower($M->getLevel()); ?>-banner"><?php
+                echo (string) $M; ?></div>
+<?php   } ?>

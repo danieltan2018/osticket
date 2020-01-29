@@ -20,7 +20,7 @@ class Validator {
     var $fields=array();
     var $errors=array();
 
-    function Validator($fields=null) {
+    function __construct($fields=null) {
         $this->setFields($fields);
     }
     function setFields(&$fields){
@@ -99,15 +99,15 @@ class Validator {
                 break;
             case 'phone':
             case 'fax':
-                if(!$this->is_phone($this->input[$k]))
+                if(!self::is_phone($this->input[$k]))
                     $this->errors[$k]=$field['error'];
                 break;
             case 'email':
-                if(!$this->is_email($this->input[$k]))
+                if(!self::is_email($this->input[$k]))
                     $this->errors[$k]=$field['error'];
                 break;
             case 'url':
-                if(!$this->is_url($this->input[$k]))
+                if(!self::is_url($this->input[$k]))
                     $this->errors[$k]=$field['error'];
                 break;
             case 'password':
@@ -116,12 +116,35 @@ class Validator {
                 break;
             case 'username':
                 $error = '';
-                if (!$this->is_username($this->input[$k], $error))
+                if (!self::is_username($this->input[$k], $error))
                     $this->errors[$k]=$field['error'].": $error";
                 break;
             case 'zipcode':
                 if(!is_numeric($this->input[$k]) || (strlen($this->input[$k])!=5))
                     $this->errors[$k]=$field['error'];
+                break;
+            case 'cs-domain': // Comma separated list of domains
+                if($values=explode(',', $this->input[$k]))
+                    foreach($values as $v)
+                        if(!preg_match_all(
+                                '/^([a-z0-9|-]+\.)*[a-z0-9|-]+\.[a-z]+$/',
+                                ltrim($v)))
+                            $this->errors[$k]=$field['error'];
+                break;
+            case 'cs-url': // Comma separated list of urls
+                if($values=explode(',', $this->input[$k]))
+                    foreach($values as $v)
+                        if(!preg_match_all(
+                                '/^(https?:\/\/)?((\*\.|\w+\.)?[\w-]+(\.[a-zA-Z]+)?(:([0-9]+|\*))?)+$/',
+                                ltrim($v)))
+                            $this->errors[$k]=$field['error'];
+                break;
+            case 'ipaddr':
+                if($values=explode(',', $this->input[$k])){
+                    foreach($values as $v)
+                        if(!preg_match_all('/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/', ltrim($v)))
+                            $this->errors[$k]=$field['error'];
+                }
                 break;
             default://If param type is not set...or handle..error out...
                 $this->errors[$k]=$field['error'].' '.__('(type not set)');
@@ -140,10 +163,11 @@ class Validator {
 
     /*** Functions below can be called directly without class instance.
          Validator::func(var..);  (nolint) ***/
-    function is_email($email, $list=false, $verify=false) {
+    static function is_email($email, $list=false, $verify=false) {
         require_once PEAR_DIR . 'Mail/RFC822.php';
         require_once PEAR_DIR . 'PEAR.php';
-        if (!($mails = Mail_RFC822::parseAddressList($email)) || PEAR::isError($mails))
+        $rfc822 = new Mail_RFC822();
+        if (!($mails = @$rfc822->parseAddressList($email)) || PEAR::isError($mails))
             return false;
 
         if (!$list && count($mails) > 1)
@@ -166,19 +190,19 @@ class Validator {
         return true;
     }
 
-    function is_valid_email($email) {
+    static function is_valid_email($email) {
         global $cfg;
         // Default to FALSE for installation
         return self::is_email($email, false, $cfg && $cfg->verifyEmailAddrs());
     }
 
-    function is_phone($phone) {
+    static function is_phone($phone) {
         /* We're not really validating the phone number but just making sure it doesn't contain illegal chars and of acceptable len */
         $stripped=preg_replace("(\(|\)|\-|\.|\+|[  ]+)","",$phone);
         return (!is_numeric($stripped) || ((strlen($stripped)<7) || (strlen($stripped)>16)))?false:true;
     }
 
-    function is_url($url) {
+    static function is_url($url) {
         //XXX: parse_url is not ideal for validating urls but it's ideal for basic checks.
         return ($url && ($info=parse_url($url)) && $info['host']);
     }
@@ -187,7 +211,7 @@ class Validator {
         return filter_var(trim($ip), FILTER_VALIDATE_IP) !== false;
     }
 
-    function is_username($username, &$error='') {
+    static function is_username($username, &$error='') {
         if (strlen($username)<2)
             $error = __('Username must have at least two (2) characters');
         elseif (!preg_match('/^[\p{L}\d._-]+$/u', $username))
@@ -195,6 +219,11 @@ class Validator {
         return $error == '';
     }
 
+    static function is_formula($text, &$error='') {
+        if (!preg_match('/^[^=\+@-].*$/s', $text))
+            $error = __('Content cannot start with the following characters: = - + @');
+        return $error == '';
+    }
 
     /*
      * check_ip
@@ -297,6 +326,37 @@ class Validator {
             $errors=array_merge($errors,$val->errors());
 
         return (!$errors);
+    }
+
+    function check_acl($backend) {
+        global $cfg;
+
+        $acl = $cfg->getACL();
+        if (empty($acl))
+            return true;
+        $ip = osTicket::get_client_ip();
+        if (empty($ip))
+            return false;
+
+        $aclbk = $cfg->getACLBackend();
+        switch($backend) {
+            case 'client':
+                if (in_array($aclbk, array(0,3)))
+                    return true;
+                break;
+            case 'staff':
+                if (in_array($aclbk, array(0,2)))
+                    return true;
+                break;
+            default:
+                return false;
+                break;
+        }
+
+        if (!in_array($ip, $acl))
+            return false;
+
+        return true;
     }
 }
 ?>
