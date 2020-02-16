@@ -33,7 +33,7 @@ if(OSTINSTALLED!=TRUE){
 define('SECRET_SALT','ntoQmJYCWGGdpg7qoen5N7GxGb11=9Vi');
 
 #Default admin email. Used only on db connection issues and related alerts.
-define('ADMIN_EMAIL','cherboonsim.2017@sis.smu.edu.sg');
+define('ADMIN_EMAIL','daniel.tan.2018@sis.smu.edu.sg');
 
 # Database Options
 # ---------------------------------------------------
