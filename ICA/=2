@@ -1,2 +1,0 @@
-Requirement already satisfied: Django in /home/ec2-user/.local/lib/python2.7/site-packages (1.11.27)
-Requirement already satisfied: pytz in /home/ec2-user/.local/lib/python2.7/site-packages (from Django) (2019.3)
